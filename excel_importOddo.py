@@ -1,45 +1,197 @@
-import streamlit as st
-import os
-from tempfile import NamedTemporaryFile
-from traitement_budget import transform_budget_data_append_sheet
+import pandas as pd
+import re
+from datetime import datetime
+from openpyxl import load_workbook
+from openpyxl.styles import Border, Side, Alignment
+import unidecode
 
-st.set_page_config(page_title="Traitement Budget Odoo", layout="centered")
+def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_name="Import Odoo"):
+    mois_liste = [
+        'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'
+    ]
+    mois_to_num = {mois: str(i+1).zfill(2) for i, mois in enumerate(mois_liste)}
 
-st.title("Importation & Traitement du Budget pour Odoo")
+    all_data_by_year = {}
 
-# Upload du fichier contenant les données de budget
-uploaded_source_file = st.file_uploader("📥 Fichier source (budget à transformer)", type=["xlsx"], key="source")
+    for input_file in input_files:
+        print(f"Lecture du fichier source: {input_file}")
+        try:
+            df_raw = pd.read_excel(input_file, header=None)
+        except Exception as e:
+            print(f"Erreur lecture Excel: {e}")
+            continue
 
-# Upload du fichier existant dans lequel ajouter la nouvelle feuille
-uploaded_existing_file = st.file_uploader("📤 Fichier Excel existant (recevra les données)", type=["xlsx"], key="target")
+        # Trouver la ligne contenant tous les mois
+        header_row_idx = None
+        for i in range(len(df_raw)):
+            row_values = df_raw.iloc[i].astype(str).str.lower().str.strip()
+            row_values = row_values.map(lambda x: unidecode.unidecode(x))
+            if all(mois in row_values.values for mois in ['janvier', 'fevrier', 'mars']):
+                header_row_idx = i
+                break
 
-if uploaded_source_file and uploaded_existing_file:
-    with NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_source:
-        tmp_source.write(uploaded_source_file.read())
-        tmp_source_path = tmp_source.name
+        if header_row_idx is None:
+            print(f"Aucune ligne d'en-tête détectée dans {input_file}")
+            continue
 
-    with NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_existing:
-        tmp_existing.write(uploaded_existing_file.read())
-        tmp_existing_path = tmp_existing.name
+        df_source = pd.read_excel(input_file, header=header_row_idx)
 
-    if st.button("🚀 Lancer le traitement"):
-        with st.spinner("Traitement en cours..."):
+        match = re.search(r'(\d{4})', input_file)
+        annee_budget = int(match.group(1)) if match and 2000 <= int(match.group(1)) <= 2100 else datetime.now().year
+
+        if annee_budget not in all_data_by_year:
+            all_data_by_year[annee_budget] = []
+
+        if 'Code' not in df_source.columns:
+            df_source.rename(columns={df_source.columns[0]: 'Code'}, inplace=True)
+        if 'Nom du compte' not in df_source.columns:
+            df_source.rename(columns={df_source.columns[1]: 'Nom du compte'}, inplace=True)
+
+        colonnes_presentes = df_source.columns.map(lambda x: unidecode.unidecode(str(x)).lower().replace(" ", ""))
+        mois_map = {}
+
+        for mois in mois_liste:
+            for col, col_clean in zip(df_source.columns, colonnes_presentes):
+                if col_clean == mois:
+                    mois_map[mois] = col
+                    break
+
+        print(f"Colonnes mois détectées pour {input_file} : {mois_map}")
+
+        compteur_ligne = 1
+        for _, row in df_source.iterrows():
+            code = row.get('Code')
+            if pd.isna(code):
+                continue
+
             try:
-                transform_budget_data_append_sheet(
-                    input_files=[tmp_source_path],
-                    existing_file=tmp_existing_path,
-                    new_sheet_name="Import Odoo"
-                )
-                with open(tmp_existing_path, "rb") as f:
-                    st.success("✅ Traitement terminé ! Vous pouvez télécharger le fichier :")
-                    st.download_button(
-                        label="📥 Télécharger le fichier traité",
-                        data=f,
-                        file_name="budget_import_odoo.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-            except Exception as e:
-                st.error(f"❌ Une erreur s'est produite : {e}")
-            finally:
-                os.remove(tmp_source_path)
-                os.remove(tmp_existing_path)
+                code_int = int(float(code))
+            except:
+                continue
+
+            for mois in mois_liste:
+                if mois not in mois_map:
+                    continue
+
+                col_mois = mois_map[mois]
+                montant = row.get(col_mois)
+
+                if pd.isna(montant):
+                    continue
+
+                if isinstance(montant, str):
+                    montant = montant.replace('.', '').replace(',', '.').replace(' ', '')
+                try:
+                    montant_float = float(montant)
+                except:
+                    continue
+
+                mois_num = mois_to_num[mois]
+                date_budget = f"01/{mois_num}/{annee_budget}"
+
+                new_row = {
+                    'annee': annee_budget,
+                    'compteur_ligne': compteur_ligne,
+                    'code_compte': str(code_int),
+                    'montant': -montant_float,
+                    'mois': mois,
+                    'date': date_budget
+                }
+                all_data_by_year[annee_budget].append(new_row)
+                compteur_ligne += 1
+
+    try:
+        wb = load_workbook(existing_file)
+    except Exception as e:
+        print(f"Erreur chargement fichier existant: {e}")
+        return
+
+    if new_sheet_name in wb.sheetnames:
+        del wb[new_sheet_name]
+    ws = wb.create_sheet(title=new_sheet_name)
+
+    headers = ['', 'name', 'id', 'item_ids/id', 'item_ids/date', 'item_ids/account', 'item_ids/amount', '']
+    ws.append(headers)
+
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    for col_idx, cell in enumerate(ws[1], 1):
+        cell.border = thin_border
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    column_widths = {'A': 10, 'B': 20, 'C': 20, 'D': 25, 'E': 12, 'F': 15, 'G': 15, 'H': 10}
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+
+    row_num = 2
+    for annee_budget in sorted(all_data_by_year.keys()):
+        year_data = all_data_by_year[annee_budget]
+        if not year_data:
+            continue
+
+        budget_name = f"{annee_budget} Budget {annee_budget}"
+        budget_id = f"budget_{annee_budget}_00001"
+
+        compteur_global = 1
+
+        for mois in mois_liste:
+            for item in year_data:
+                if item['mois'] != mois:
+                    continue
+
+                if compteur_global == 1:
+                    row_values = [
+                        annee_budget,
+                        budget_name,
+                        budget_id,
+                        f"lignes_budget_{annee_budget}{compteur_global}",
+                        item['date'],
+                        item['code_compte'],
+                        item['montant'],
+                        item['mois']
+                    ]
+                else:
+                    row_values = [
+                        "",
+                        "",
+                        "",
+                        f"lignes_budget_{annee_budget}{compteur_global}",
+                        item['date'],
+                        item['code_compte'],
+                        item['montant'],
+                        item['mois']
+                    ]
+
+                ws.append(row_values)
+
+                for col_idx in range(1, len(headers) + 1):
+                    cell = ws.cell(row=row_num, column=col_idx)
+                    cell.border = thin_border
+
+                    if col_idx in [1, 6]:
+                        cell.alignment = Alignment(horizontal='center')
+                    elif col_idx == 7:
+                        cell.alignment = Alignment(horizontal='right')
+                    else:
+                        cell.alignment = Alignment(horizontal='left')
+
+                row_num += 1
+                compteur_global += 1
+
+    try:
+        wb.save(existing_file)
+        print(f"✅ Feuille '{new_sheet_name}' ajoutée dans : {existing_file}")
+    except Exception as e:
+        print(f"Erreur sauvegarde: {e}")
+
+
+if __name__ == "__main__":
+    input_files = ["compte_de_resultats_budget1 (1).xlsx"]
+    output_file = "compte_de_resultats_budget1 (1).xlsx"
+    transform_budget_data_append_sheet(input_files, output_file)
