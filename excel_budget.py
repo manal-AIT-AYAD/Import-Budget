@@ -8,7 +8,6 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     workbook = load_workbook(source_path)
     sheet = workbook.active
 
-    # Trouver la ligne d'en-tête
     header_row_index = None
     for row in range(1, 20):
         code_cell = sheet.cell(row=row, column=1).value
@@ -25,7 +24,6 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     if header_row_index is None:
         raise ValueError("Ligne d'en-tête non trouvée")
 
-    # Année du solde
     solde_year = None
     solde_header_cell = sheet.cell(row=header_row_index, column=3).value
     if solde_header_cell:
@@ -48,8 +46,6 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
         solde_year = datetime.now().year
 
     budget_year = solde_year + 1
-
-    # Netoyage des  lignes sans code
     rows_to_delete = []
     for row in range(header_row_index + 1, sheet.max_row + 1):
         if not sheet.cell(row=row, column=1).value:
@@ -57,7 +53,6 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     for row in reversed(rows_to_delete):
         sheet.delete_rows(row)
 
-    # Styles
     thin_border = Border(
         left=Side(style='thin'), right=Side(style='thin'),
         top=Side(style='thin'), bottom=Side(style='thin')
@@ -66,40 +61,29 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     header_font = Font(bold=True)
     centered_alignment = Alignment(horizontal="center", vertical="center")
     right_alignment = Alignment(horizontal="right", vertical="center")
-
-    # Supprimer fusion de C1 si présente
     if "C1" in sheet.merged_cells:
         sheet.unmerge_cells("C1")
     sheet["C1"].value = None
-
-    # Renommer colonne solde
     solde_col_letter = get_column_letter(3)
     solde_cell = sheet[f"{solde_col_letter}{header_row_index}"]
     solde_cell.value = f"Solde {solde_year}"
     solde_cell.font = Font(bold=True)
     solde_cell.alignment = centered_alignment
-
-    # Ajouter l'année au-dessus du solde
     year_cell = sheet.cell(row=header_row_index - 1, column=3)
     year_cell.value = budget_year
     year_cell.font = Font(bold=True, underline="single")
     year_cell.alignment = right_alignment
-
-    # Trouver la dernière ligne de données
     last_data_row = header_row_index
     for row in range(header_row_index + 1, sheet.max_row + 1):
         if sheet.cell(row=row, column=1).value:
             last_data_row = row
 
-    # Colonnes à ajouter
     new_columns = ["%"] + [
         "janvier", "février", "mars", "avril", "mai", "juin",
         "juillet", "août", "septembre", "octobre", "novembre", "décembre"
     ]
     start_col = 4
     total_col = start_col + len(new_columns)
-
-    # Ajouter en-têtes
     for i, title in enumerate(new_columns):
         col_letter = get_column_letter(start_col + i)
         cell = sheet[f"{col_letter}{header_row_index}"]
@@ -107,16 +91,12 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
         cell.alignment = centered_alignment
         cell.border = thin_border
         cell.font = header_font
-
-    # En-tête "Total"
     total_col_letter = get_column_letter(total_col)
     cell = sheet[f"{total_col_letter}{header_row_index}"]
     cell.value = "Total"
     cell.alignment = centered_alignment
     cell.border = thin_border
     cell.font = header_font
-
-    # Titre "Budget {year}" au-dessus
     title_row_index = header_row_index - 1
     first_merge_col = get_column_letter(start_col)
     last_merge_col = get_column_letter(start_col + 12)
@@ -127,26 +107,19 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     cell.fill = header_fill
     cell.font = Font(bold=True, size=14)
     cell.border = thin_border
-
-    # Styles en-têtes Code / Nom / Solde
     for col in range(1, start_col):
         cell = sheet.cell(row=header_row_index, column=col)
         cell.border = thin_border
         cell.font = header_font
         cell.alignment = centered_alignment
-
-    # Insérer formules mensuelles + total, laisser % vide
     for row in range(header_row_index + 1, last_data_row + 1):
         solde_cell_ref = f"${get_column_letter(3)}{row}"
         percent_cell_ref = f"${get_column_letter(start_col)}{row}"
 
-        # Cellule % vide
         percent_cell = sheet.cell(row=row, column=start_col)
         percent_cell.value = None
         percent_cell.alignment = centered_alignment
         percent_cell.border = thin_border
-
-        # Colonnes mois
         for i in range(1, 13):
             monthly_col = start_col + i
             cell = sheet.cell(row=row, column=monthly_col)
@@ -154,8 +127,6 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
             cell.number_format = '#,##0.00'
             cell.alignment = right_alignment
             cell.border = thin_border
-
-        # Total
         total_cell = sheet.cell(row=row, column=total_col)
         first_month_letter = get_column_letter(start_col + 1)
         last_month_letter = get_column_letter(start_col + 12)
@@ -163,8 +134,6 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
         total_cell.number_format = '#,##0.00'
         total_cell.alignment = right_alignment
         total_cell.border = thin_border
-
-    # Bordures colonnes Code / Nom / Solde
     for row in range(header_row_index + 1, last_data_row + 1):
         for col in range(1, start_col):
             cell = sheet.cell(row=row, column=col)
@@ -173,8 +142,6 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
                 cell.number_format = '#,##0.00'
                 cell.alignment = right_alignment
                 sheet.column_dimensions[get_column_letter(col)].width = 15
-
-    # Ajuster largeur colonnes
     for col in range(1, total_col + 1):
         max_length = 0
         column = get_column_letter(col)
@@ -186,7 +153,5 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
         if col == 3 or col >= start_col + 1:
             adjusted_width = max(adjusted_width, 15)
         sheet.column_dimensions[column].width = adjusted_width
-
-    # Sauvegarde
     workbook.save(output_path)
     return output_path
