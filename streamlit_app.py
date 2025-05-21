@@ -23,7 +23,5 @@ if uploaded_file is not None:
                 file_name=output_file,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-
-    # Nettoyer les fichiers temporaires
     os.remove("temp_uploaded.xlsx")
     os.remove(output_file)
