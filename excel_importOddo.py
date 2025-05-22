@@ -135,7 +135,7 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
         if not year_data:
             continue
 
-        budget_name = f"{annee_budget} Budget {annee_budget}"
+        budget_name = f"Budget {annee_budget}"
         budget_id = f"budget_{annee_budget}_00001"
 
         compteur_global = 1
@@ -174,10 +174,11 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
                     cell = ws.cell(row=row_num, column=col_idx)
                     cell.border = thin_border
 
-                    if col_idx in [1, 6]:
-                        cell.alignment = Alignment(horizontal='center')
-                    elif col_idx == 7:
+                    if col_idx == 7: 
+                        cell.number_format = '#,##0.00'
                         cell.alignment = Alignment(horizontal='right')
+                    elif col_idx in [1, 6]:
+                        cell.alignment = Alignment(horizontal='center')
                     else:
                         cell.alignment = Alignment(horizontal='left')
 
