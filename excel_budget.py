@@ -117,9 +117,11 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
         percent_cell_ref = f"${get_column_letter(start_col)}{row}"
 
         percent_cell = sheet.cell(row=row, column=start_col)
-        percent_cell.value = None
+        percent_cell.value = 0  
+        percent_cell.number_format = '0.00%'  
         percent_cell.alignment = centered_alignment
         percent_cell.border = thin_border
+
         for i in range(1, 13):
             monthly_col = start_col + i
             cell = sheet.cell(row=row, column=monthly_col)
