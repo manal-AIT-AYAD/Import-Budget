@@ -94,12 +94,36 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
                 if pd.isna(montant):
                     continue
 
+                # Gestion du montant avec vérification des pourcentages
                 if isinstance(montant, str):
-                    montant = montant.replace('.', '').replace(',', '.').replace(' ', '')
-                try:
-                    montant_float = float(montant)
-                except:
-                    continue
+                    montant_str = montant.strip().replace(' ', '').replace(',', '.')
+                    # Si c'est un nombre sans % et > 100, on ajoute le %
+                    if re.match(r'^\d+(\.\d+)?$', montant_str):
+                        montant_float_temp = float(montant_str)
+                        if montant_float_temp > 100:
+                            montant = f"{int(montant_float_temp)}%"
+                        else:
+                            montant = montant_float_temp
+                    else:
+                        try:
+                            montant = float(montant_str)
+                        except:
+                            continue
+                else:
+                    montant_float_temp = montant
+                    montant = montant_float_temp
+
+                # Conversion finale en float pour le traitement
+                if isinstance(montant, str) and montant.endswith('%'):
+                    try:
+                        montant_float = float(montant.rstrip('%')) / 100
+                    except:
+                        continue
+                else:
+                    try:
+                        montant_float = float(montant)
+                    except:
+                        continue
 
                 mois_num = mois_to_num[mois]
                 date_budget = f"01/{mois_num}/{annee_budget}"
@@ -207,6 +231,6 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
 
 
 if __name__ == "__main__":
-    input_files = ["compte_de_resultats_budget1.xlsx"]  
+    input_files = ["compte_de_resultats_budget1.xlsx"]
     output_file = "compte_de_resultats_budget1.xlsx"
     transform_budget_data_append_sheet(input_files, output_file)
