@@ -22,7 +22,6 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
             print(f"Erreur lecture Excel: {e}")
             continue
 
-        # Détecter l'année dans les premières lignes du fichier
         annee_budget = None
         for i in range(min(10, len(df_raw))):
             row = df_raw.iloc[i].astype(str)
@@ -35,15 +34,12 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
                         break
             if annee_budget:
                 break
-
-        # Fallback si non trouvée
         if not annee_budget:
             match = re.search(r'(\d{4})', input_file)
             annee_budget = int(match.group(1)) if match and 2000 <= int(match.group(1)) <= 2100 else datetime.now().year
 
         print(f"✅ Année détectée pour le fichier : {annee_budget}")
 
-        # Trouver la ligne contenant tous les mois
         header_row_idx = None
         for i in range(len(df_raw)):
             row_values = df_raw.iloc[i].astype(str).str.lower().str.strip()
