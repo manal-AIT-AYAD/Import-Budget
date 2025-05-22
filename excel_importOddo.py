@@ -22,6 +22,27 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
             print(f"Erreur lecture Excel: {e}")
             continue
 
+        # Détecter l'année dans les premières lignes du fichier
+        annee_budget = None
+        for i in range(min(10, len(df_raw))):
+            row = df_raw.iloc[i].astype(str)
+            for val in row:
+                match = re.search(r'(\d{4})', val)
+                if match:
+                    annee_candidate = int(match.group(1))
+                    if 2000 <= annee_candidate <= 2100:
+                        annee_budget = annee_candidate
+                        break
+            if annee_budget:
+                break
+
+        # Fallback si non trouvée
+        if not annee_budget:
+            match = re.search(r'(\d{4})', input_file)
+            annee_budget = int(match.group(1)) if match and 2000 <= int(match.group(1)) <= 2100 else datetime.now().year
+
+        print(f"✅ Année détectée pour le fichier : {annee_budget}")
+
         # Trouver la ligne contenant tous les mois
         header_row_idx = None
         for i in range(len(df_raw)):
@@ -36,9 +57,6 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
             continue
 
         df_source = pd.read_excel(input_file, header=header_row_idx)
-
-        match = re.search(r'(\d{4})', input_file)
-        annee_budget = int(match.group(1)) if match and 2000 <= int(match.group(1)) <= 2100 else datetime.now().year
 
         if annee_budget not in all_data_by_year:
             all_data_by_year[annee_budget] = []
@@ -174,7 +192,7 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
                     cell = ws.cell(row=row_num, column=col_idx)
                     cell.border = thin_border
 
-                    if col_idx == 7: 
+                    if col_idx == 7:
                         cell.number_format = '#,##0.00'
                         cell.alignment = Alignment(horizontal='right')
                     elif col_idx in [1, 6]:
@@ -193,6 +211,6 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
 
 
 if __name__ == "__main__":
-    input_files = ["compte_de_resultats_budget1 (1).xlsx"]
-    output_file = "compte_de_resultats_budget1 (1).xlsx"
+    input_files = ["compte_de_resultats_budget1.xlsx"]  
+    output_file = "compte_de_resultats_budget1.xlsx"
     transform_budget_data_append_sheet(input_files, output_file)
