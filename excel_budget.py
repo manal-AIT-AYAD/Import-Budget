@@ -104,23 +104,25 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     cell.border = thin_border
     cell.font = header_font
 
+    # Titre "Budget N+1" au-dessus des mois
     title_row_index = header_row_index - 1
     first_merge_col = get_column_letter(start_col)
     last_merge_col = get_column_letter(start_col + 12)
     sheet.merge_cells(f"{first_merge_col}{title_row_index}:{last_merge_col}{title_row_index}")
     cell = sheet[f"{first_merge_col}{title_row_index}"]
 
-    today = datetime.now()
-    date_str = today.strftime("%Y/%m/%d")  # AAAA/MM/JJ
-    time_str = today.strftime("%H:%M")     # HH:MM
-    budget_title = f"Budget {solde_year + 1} : correspond à l’année du compte de résultat ({solde_year}) + 1\n{date_str}\n{time_str}"
+    # Format date et heure actuels
+    now = datetime.now()
+    formatted_date = now.strftime("%Y/%m/%d")
+    formatted_time = now.strftime("%H:%M")
 
-
-    cell.value = budget_title
+    # Appliquer le nouveau titre
+    cell.value = f"Budget {budget_year} - {formatted_date} - {formatted_time}"
     cell.alignment = centered_alignment
     cell.fill = header_fill
     cell.font = Font(bold=True, size=14)
     cell.border = thin_border
+
 
     for col in range(1, start_col):
         cell = sheet.cell(row=header_row_index, column=col)
