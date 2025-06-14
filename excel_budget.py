@@ -104,7 +104,6 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     cell.border = thin_border
     cell.font = header_font
 
-    # ✅ Création du nom du budget : Budget N+1 - date - heure
     title_row_index = header_row_index - 1
     first_merge_col = get_column_letter(start_col)
     last_merge_col = get_column_letter(start_col + 12)
@@ -112,9 +111,10 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     cell = sheet[f"{first_merge_col}{title_row_index}"]
 
     today = datetime.now()
-    date_str = today.strftime("%d-%m-%Y")
-    time_str = today.strftime("%Hh%M")
+    date_str = today.strftime("%Y/%m/%d")
+    time_str = today.strftime("%H:%M")
     budget_title = f"Budget {budget_year} - {date_str} - {time_str}"
+
     cell.value = budget_title
     cell.alignment = centered_alignment
     cell.fill = header_fill
