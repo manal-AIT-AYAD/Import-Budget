@@ -149,7 +149,12 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
         if not year_data:
             continue
 
-        budget_name = f"Budget {annee_budget}"
+        #budget_name = f"Budget {annee_budget}"
+        now = datetime.now()
+        formatted_date = now.strftime("%d/%m/%Y")
+        formatted_time = now.strftime("%H:%M")
+        budget_name = f"Budget {annee_budget + 1} - {formatted_date} - {formatted_time}"
+
         budget_id = f"budget_{annee_budget}_00001"
 
         compteur_global = 1
