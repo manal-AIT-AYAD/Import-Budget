@@ -113,11 +113,11 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
 
     # Format date et heure actuels
     now = datetime.now()
-    formatted_date = now.strftime("%Y/%m/%d") 
-    formatted_time = now.strftime("%H:%M") 
+    #formatted_date = now.strftime("%Y/%m/%d") 
+    #formatted_time = now.strftime("%H:%M") 
 
     # Appliquer le nouveau titre
-    cell.value = f"Budget {budget_year} - {formatted_date} - {formatted_time}"
+    cell.value = f"Budget {budget_year} "
     cell.alignment = centered_alignment
     cell.fill = header_fill
     cell.font = Font(bold=True, size=14)
