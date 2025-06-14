@@ -111,9 +111,10 @@ def process_budget_excel(source_path: str, output_path: str = "compte_de_resulta
     cell = sheet[f"{first_merge_col}{title_row_index}"]
 
     today = datetime.now()
-    date_str = today.strftime("%Y/%m/%d")
-    time_str = today.strftime("%H:%M")
-    budget_title = f"Budget {budget_year} - {date_str} - {time_str}"
+    date_str = today.strftime("%Y/%m/%d")  # AAAA/MM/JJ
+    time_str = today.strftime("%H:%M")     # HH:MM
+    budget_title = f"Budget {solde_year + 1} : correspond à l’année du compte de résultat ({solde_year}) + 1\n{date_str}\n{time_str}"
+
 
     cell.value = budget_title
     cell.alignment = centered_alignment
