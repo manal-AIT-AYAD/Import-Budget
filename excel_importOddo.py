@@ -151,9 +151,9 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
 
         #budget_name = f"Budget {annee_budget}"
         now = datetime.now()
-        formatted_date = now.strftime("%d/%m/%Y")
+        formatted_date = now.strftime("%Y/%m/%d") 
         formatted_time = now.strftime("%H:%M")
-        budget_name = f"Budget {annee_budget + 1} - {formatted_date} - {formatted_time}"
+        budget_name = f"Budget {annee_budget} - {formatted_date} - {formatted_time}"
 
         budget_id = f"budget_{annee_budget}_00001"
 
