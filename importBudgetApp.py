@@ -70,7 +70,7 @@ elif option == "➡️ Nettoyage & Traitement Budget":
     st.markdown("Nettoie et transforme un fichier budget Excel avec des feuilles structurées.")
 
     uploaded_file = st.file_uploader("📤 Téléversez un fichier Excel (.xlsx)", type=["xlsx"])
-
+    date_input = st.date_input("🗓️ Sélectionnez le mois et l'année pour le traitement (le jour est ignoré)")
     if uploaded_file is not None:
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
