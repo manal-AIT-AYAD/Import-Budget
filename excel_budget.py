@@ -8,7 +8,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
     workbook = load_workbook(source_path)
     sheet = workbook.active
 
-    # Trouver la ligne d'en-tête (même code que précédemment)...
     header_row_index = None
     for row in range(1, 20):
         code_cell = sheet.cell(row=row, column=1).value
@@ -25,7 +24,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
     if header_row_index is None:
         raise ValueError("Ligne d'en-tête non trouvée")
 
-    # Trouver l'année budgetaire, idem précédent code...
     solde_year = None
     solde_header_cell = sheet.cell(row=header_row_index, column=3).value
     if solde_header_cell:
@@ -49,7 +47,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
 
     budget_year = solde_year + 1
 
-    # Nettoyer les lignes vides comme avant...
     rows_to_delete = []
     for row in range(header_row_index + 1, sheet.max_row + 1):
         if not sheet.cell(row=row, column=1).value:
@@ -57,7 +54,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
     for row in reversed(rows_to_delete):
         sheet.delete_rows(row)
 
-    # Définir styles et bordures...
     thin_border = Border(
         left=Side(style='thin'), right=Side(style='thin'),
         top=Side(style='thin'), bottom=Side(style='thin')
@@ -87,7 +83,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
         if sheet.cell(row=row, column=1).value:
             last_data_row = row
 
-    # Colonnes % + mois + total
     new_columns = ["%"] + [
         "janvier", "février", "mars", "avril", "mai", "juin",
         "juillet", "août", "septembre", "octobre", "novembre", "décembre"
@@ -110,7 +105,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
     cell.border = thin_border
     cell.font = header_font
 
-    # Titre au-dessus des mois
     title_row_index = header_row_index - 1
     first_merge_col = get_column_letter(start_col)
     last_merge_col = get_column_letter(start_col + 12)
@@ -133,7 +127,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
         cell.font = header_font
         cell.alignment = centered_alignment
 
-    # Trouver l'index du mois choisi (1-12)
     selected_month = processing_date.month
 
     for row in range(header_row_index + 1, last_data_row + 1):
@@ -149,7 +142,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
         percent_cell.border = thin_border
 
         if "pécule de vacances - salariés" in compte_name:
-            # Pour ce compte, on met le montant entier dans la colonne correspondant au mois choisi
             for i in range(1, 13):
                 monthly_col = start_col + i
                 cell = sheet.cell(row=row, column=monthly_col)
@@ -161,7 +153,6 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
                 cell.alignment = right_alignment
                 cell.border = thin_border
         else:
-            # Sinon, formule normale de répartition par 12
             for i in range(1, 13):
                 monthly_col = start_col + i
                 cell = sheet.cell(row=row, column=monthly_col)
