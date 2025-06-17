@@ -78,7 +78,8 @@ elif option == "➡️ Nettoyage & Traitement Budget":
                 temp_input_path = temp_file.name
 
             with st.spinner("📈 Traitement du budget en cours..."):
-                output_file_path = process_budget_excel(temp_input_path)
+                #output_file_path = process_budget_excel(temp_input_path)
+                output_file_path = process_budget_excel(temp_input_path, processing_date=date_input)
 
             st.success("✅ Traitement terminé !")
 
