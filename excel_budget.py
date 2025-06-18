@@ -11,7 +11,9 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
     tz_brussels = pytz.timezone("Europe/Brussels")
 
     # Heure locale pour Casablanca
-    heure_casa = datetime.now(tz_casablanca)
+    utc_now = datetime.utcnow().replace(tzinfo=pytz.utc)
+    heure_casa = utc_now.astimezone(tz_casablanca)
+
     #print("🇲🇦 Heure locale à Casablanca :", heure_casa.strftime("%Y/%m/%d %H:%M:%S %Z"))
 
     # Heure locale pour Bruxelles
