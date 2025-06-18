@@ -4,6 +4,7 @@ from datetime import datetime
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, Alignment
 import unidecode
+import pytz
 
 def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_name="Import Odoo"):
     mois_liste = [
@@ -150,10 +151,12 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
             continue
 
         #budget_name = f"Budget {annee_budget}"
-        now = datetime.now()
-        formatted_date = now.strftime("%Y/%m/%d") 
+        tz_casablanca = pytz.timezone("Africa/Casablanca")
+        now = datetime.now(tz_casablanca)
+        formatted_date = now.strftime("%Y/%m/%d")
         formatted_time = now.strftime("%H:%M")
         budget_name = f"Budget {annee_budget} - {formatted_date} - {formatted_time}"
+
 
         budget_id = f"budget_{annee_budget}_00001"
 
