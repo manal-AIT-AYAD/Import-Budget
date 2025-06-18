@@ -3,8 +3,21 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, PatternFill, Font, Border, Side
 from datetime import datetime
 import re
+import pytz
 
 def process_budget_excel(source_path: str, processing_date: datetime, output_path: str = "compte_de_resultats_budget1.xlsx") -> str:
+    # Définition des fuseaux horaires
+    tz_casablanca = pytz.timezone("Africa/Casablanca")
+    tz_brussels = pytz.timezone("Europe/Brussels")
+
+    # Heure locale pour Casablanca
+    heure_casa = datetime.now(tz_casablanca)
+    #print("🇲🇦 Heure locale à Casablanca :", heure_casa.strftime("%Y/%m/%d %H:%M:%S %Z"))
+
+    # Heure locale pour Bruxelles
+    heure_bruxelles = datetime.now(tz_brussels)
+    #print("🇧🇪 Heure locale à Bruxelles  :", heure_bruxelles.strftime("%Y/%m/%d %H:%M:%S %Z"))
+
     workbook = load_workbook(source_path)
     sheet = workbook.active
 
@@ -111,9 +124,9 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
     sheet.merge_cells(f"{first_merge_col}{title_row_index}:{last_merge_col}{title_row_index}")
     cell = sheet[f"{first_merge_col}{title_row_index}"]
 
-    now = datetime.now()
-    formatted_date = now.strftime("%Y/%m/%d") 
-    formatted_time = now.strftime("%H:%M") 
+    # Utiliser l'heure locale de Casablanca pour le titre
+    formatted_date = heure_casa.strftime("%Y/%m/%d")
+    formatted_time = heure_casa.strftime("%H:%M")
 
     cell.value = f"Budget {budget_year} - {formatted_date} - {formatted_time}"
     cell.alignment = centered_alignment
