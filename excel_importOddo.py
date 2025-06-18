@@ -151,11 +151,13 @@ def transform_budget_data_append_sheet(input_files, existing_file, new_sheet_nam
             continue
 
         #budget_name = f"Budget {annee_budget}"
-        tz_casablanca = pytz.timezone("Africa/Casablanca")
-        now = datetime.now(tz_casablanca)
+        # Définir explicitement le fuseau horaire Casablanca
+        tz_Maroc = pytz.timezone("Africa/Casablanca")
+        now = datetime.now(tz_Maroc)
         formatted_date = now.strftime("%Y/%m/%d")
         formatted_time = now.strftime("%H:%M")
         budget_name = f"Budget {annee_budget} - {formatted_date} - {formatted_time}"
+
 
 
         budget_id = f"budget_{annee_budget}_00001"

@@ -7,12 +7,11 @@ import pytz
 
 def process_budget_excel(source_path: str, processing_date: datetime, output_path: str = "compte_de_resultats_budget1.xlsx") -> str:
     # Définition des fuseaux horaires
-    tz_casablanca = pytz.timezone("Africa/Casablanca")
+    tz_Maroc = pytz.timezone("Africa/Casablanca")
     tz_brussels = pytz.timezone("Europe/Brussels")
 
-    # Heure locale pour Casablanca
     utc_now = datetime.utcnow().replace(tzinfo=pytz.utc)
-    heure_casa = utc_now.astimezone(tz_casablanca)
+    heure_Maroc = utc_now.astimezone(tz_Maroc)
 
     #print("🇲🇦 Heure locale à Casablanca :", heure_casa.strftime("%Y/%m/%d %H:%M:%S %Z"))
 
@@ -127,8 +126,8 @@ def process_budget_excel(source_path: str, processing_date: datetime, output_pat
     cell = sheet[f"{first_merge_col}{title_row_index}"]
 
     # Utiliser l'heure locale de Casablanca pour le titre
-    formatted_date = heure_casa.strftime("%Y/%m/%d")
-    formatted_time = heure_casa.strftime("%H:%M")
+    formatted_date = heure_Maroc.strftime("%Y/%m/%d")
+    formatted_time = heure_Maroc.strftime("%H:%M")
 
     cell.value = f"Budget {budget_year} - {formatted_date} - {formatted_time}"
     cell.alignment = centered_alignment
